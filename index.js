@@ -1,12 +1,13 @@
 const express = require("express");
 const fs = require("fs/promises");
-const { json } = require("express/lib/response");
 const path = require("path")
+const crypto = require("crypto");
 
 const filePath = path.normalize(__dirname + '/db/users.json')
 
-
 const app = express();
+app.use(express.json());
+
 app.listen(5000, () => console.log('Serever is runnig on the port 5000'));
 
 app.get('/users', async (req, res) => {
@@ -18,6 +19,7 @@ app.get('/users', async (req, res) => {
     }
 
 })
+
 app.get('/users/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -30,12 +32,19 @@ app.get('/users/:id', async (req, res) => {
     }
 })
 
-app.post('/users', (req, res) => {
+app.post('/users', async (req, res) => {
     try {
-        const users = JSON.parse(await fs.readFile(filePath));
         const body = req.body;
-    } catch (e) {
+        const users = JSON.parse(await fs.readFile(filePath));
 
+        const newUser = { ...body, id: Date.now() };
+        users.push(newUser);
+
+        await fs.writeFile(filePath, JSON.stringify(users))
+        res.json(newUser)
+
+    } catch (e) {
+        res.json({ error: e.message });
     }
 })
 // app.put('/users/:id', (req, res) => { })
